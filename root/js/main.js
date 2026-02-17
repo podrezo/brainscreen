@@ -34,25 +34,28 @@ function fitText($el, maxWidth, maxHeight) {
   $el.css('font-size', lo + 'px');
 }
 
-// Tilt detection
-const TILT_THRESHOLD_CORRECT = 140; // beta > this = tilted down (correct)
-const TILT_THRESHOLD_SKIP = 40;     // beta < this = tilted up (skip)
-const TILT_COOLDOWN = 1000;         // ms before next tilt registers
+// Tilt detection via acceleration spikes
+const ACCEL_THRESHOLD = 6;     // m/s² — spike magnitude to register a tilt
+const TILT_COOLDOWN = 1000;    // ms before next tilt registers
 
 let tiltCooldown = false;
 
-function handleOrientation(event) {
-  const alpha = event.alpha?.toFixed(1) ?? '-';
-  const beta = event.beta?.toFixed(1) ?? '-';
-  const gamma = event.gamma?.toFixed(1) ?? '-';
-  $('#debug-info').text(`α:${alpha} β:${beta} γ:${gamma}`);
+function handleMotion(event) {
+  const a = event.acceleration || {};
+  const x = a.x ?? 0;
+  const y = a.y ?? 0;
+  const z = a.z ?? 0;
+  $('#debug-info').text(`x:${x.toFixed(1)} y:${y.toFixed(1)} z:${z.toFixed(1)}`);
 
   if (!gameState || tiltCooldown) return;
 
-  if (event.beta > TILT_THRESHOLD_CORRECT) {
-    triggerAction(true);
-  } else if (beta < TILT_THRESHOLD_SKIP) {
-    triggerAction(false);
+  // Phone is in landscape on forehead, screen facing out.
+  // Tilting forward (nod down, correct) produces a positive z spike.
+  // Tilting backward (look up, skip) produces a negative z spike.
+  if (z > ACCEL_THRESHOLD) {
+    triggerAction(true);   // correct
+  } else if (z < -ACCEL_THRESHOLD) {
+    triggerAction(false);  // skip
   }
 }
 
@@ -73,11 +76,11 @@ function triggerAction(correct) {
 }
 
 function startTiltDetection() {
-  window.addEventListener('deviceorientation', handleOrientation);
+  window.addEventListener('devicemotion', handleMotion);
 }
 
 function stopTiltDetection() {
-  window.removeEventListener('deviceorientation', handleOrientation);
+  window.removeEventListener('devicemotion', handleMotion);
 }
 
 async function requestMotionPermission() {
@@ -85,10 +88,6 @@ async function requestMotionPermission() {
     if (typeof DeviceMotionEvent !== 'undefined' &&
         typeof DeviceMotionEvent.requestPermission === 'function') {
       await DeviceMotionEvent.requestPermission();
-    }
-    if (typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function') {
-      await DeviceOrientationEvent.requestPermission();
     }
   } catch (e) {
     $('#debug-info').text(`Sensor error: ${e.message || e}`);
