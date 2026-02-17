@@ -33,6 +33,67 @@ function fitText($el, maxWidth, maxHeight) {
   $el.css('font-size', lo + 'px');
 }
 
+// Tilt detection
+const TILT_THRESHOLD_CORRECT = 140; // beta > this = tilted down (correct)
+const TILT_THRESHOLD_SKIP = 40;     // beta < this = tilted up (skip)
+const TILT_COOLDOWN = 1000;         // ms before next tilt registers
+
+let tiltCooldown = false;
+
+function handleOrientation(event) {
+  const alpha = event.alpha?.toFixed(1) ?? '-';
+  const beta = event.beta?.toFixed(1) ?? '-';
+  const gamma = event.gamma?.toFixed(1) ?? '-';
+  $('#debug-orientation').text(`α:${alpha} β:${beta} γ:${gamma}`);
+
+  if (!gameState || tiltCooldown) return;
+
+  if (event.beta > TILT_THRESHOLD_CORRECT) {
+    triggerAction(true);
+  } else if (beta < TILT_THRESHOLD_SKIP) {
+    triggerAction(false);
+  }
+}
+
+function triggerAction(correct) {
+  tiltCooldown = true;
+
+  if (correct) {
+    new Audio('sounds/correct.mp3').play();
+  } else {
+    new Audio('sounds/skip.mp3').play();
+  }
+
+  nextWord(correct);
+
+  setTimeout(() => {
+    tiltCooldown = false;
+  }, TILT_COOLDOWN);
+}
+
+function startTiltDetection() {
+  window.addEventListener('deviceorientation', handleOrientation);
+}
+
+function stopTiltDetection() {
+  window.removeEventListener('deviceorientation', handleOrientation);
+}
+
+async function requestMotionPermission() {
+  try {
+    if (typeof DeviceMotionEvent !== 'undefined' &&
+        typeof DeviceMotionEvent.requestPermission === 'function') {
+      await DeviceMotionEvent.requestPermission();
+    }
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      await DeviceOrientationEvent.requestPermission();
+    }
+  } catch (e) {
+    $('#debug-orientation').text(`Sensor error: ${e.message || e}`);
+  }
+}
+
 // Game state
 let gameState = null;
 
@@ -40,7 +101,7 @@ function showWord() {
   const $word = $('#game-word');
   const word = gameState.words[gameState.wordIndex];
   $word.text(word);
-  fitText($word, gameState.containerWidth, gameState.containerHeight);
+  fitText($word, gameState.containerWidth * 0.9, gameState.containerHeight);
 }
 
 function nextWord(correct) {
@@ -83,12 +144,13 @@ function showResults() {
 
 function endGame() {
   clearInterval(gameState.timerInterval);
+  stopTiltDetection();
   // Count the current word on screen as skipped
   const current = gameState.words[gameState.wordIndex];
   if (current) {
     gameState.skippedAnswers.push(current);
   }
-  new Audio('sounds/gameover.wav').play();
+  new Audio('sounds/gameover.mp3').play();
   showResults();
 }
 
@@ -116,6 +178,7 @@ async function startGame(category) {
 
   $('#game-timer').text(gameState.timeRemaining);
   showWord();
+  startTiltDetection();
 
   gameState.timerInterval = setInterval(() => {
     gameState.timeRemaining--;
@@ -163,8 +226,9 @@ function startCountdown(category) {
 }
 
 $(function () {
-  $('.category-list').on('click', '[data-category]', function () {
+  $('.category-list').on('click', '[data-category]', async function () {
     const category = $(this).data('category');
+    await requestMotionPermission();
     startCountdown(category);
   });
 
