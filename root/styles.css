@@ -14,9 +14,19 @@ html, body {
 
 #app {
   height: 100%;
+}
+
+.screen {
+  height: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.category-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (orientation: portrait) {
