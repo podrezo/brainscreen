@@ -1,6 +1,6 @@
 // BrainScreen - main entry point
 
-const APP_VERSION = 'v0.1.1a';
+const APP_VERSION = 'v0.1.2a';
 const GAME_DURATION = 16;
 
 const screens = {
@@ -34,6 +34,28 @@ function fitText($el, maxWidth, maxHeight) {
   $el.css('font-size', lo + 'px');
 }
 
+// Sound manager — pre-create and unlock on user gesture for iOS
+const sounds = {
+  correct: new Audio('sounds/correct.mp3'),
+  skip: new Audio('sounds/skip.mp3'),
+  gameover: new Audio('sounds/gameover.mp3'),
+  ticking: new Audio('sounds/ticking.mp3'),
+  countdown: new Audio('sounds/countdown-starting.mp3'),
+};
+
+function unlockSounds() {
+  for (const s of Object.values(sounds)) {
+    s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(() => {});
+  }
+}
+
+function playSound(name) {
+  const s = sounds[name];
+  if (!s) return;
+  s.currentTime = 0;
+  s.play().catch(() => {});
+}
+
 // Tilt detection via acceleration spikes
 const ACCEL_THRESHOLD = 4;     // m/s² — spike magnitude to register a tilt
 const TILT_COOLDOWN = 1000;    // ms before next tilt registers
@@ -62,11 +84,7 @@ function handleMotion(event) {
 function triggerAction(correct) {
   tiltCooldown = true;
 
-  if (correct) {
-    new Audio('sounds/correct.mp3').play();
-  } else {
-    new Audio('sounds/skip.mp3').play();
-  }
+  playSound(correct ? 'correct' : 'skip');
 
   nextWord(correct);
 
@@ -151,7 +169,7 @@ function endGame() {
   if (current) {
     gameState.skippedAnswers.push(current);
   }
-  new Audio('sounds/gameover.mp3').play();
+  playSound('gameover');
   showResults();
 }
 
@@ -187,7 +205,7 @@ async function startGame(category) {
 
     if (gameState.timeRemaining === 15 && !gameState.tickingPlayed) {
       gameState.tickingPlayed = true;
-      new Audio('sounds/ticking.mp3').play();
+      playSound('ticking');
     }
 
     if (gameState.timeRemaining <= 0) {
@@ -209,16 +227,14 @@ function startCountdown(category) {
   const $num = $('#countdown-number');
   const allColors = steps.map(s => s.color).join(' ');
 
-  const countdownSound = new Audio('sounds/countdown-starting.mp3');
-
   $num.text(steps[i].text).removeClass(allColors).addClass(steps[i].color);
-  countdownSound.cloneNode().play();
+  playSound('countdown');
 
   const interval = setInterval(() => {
     i++;
     if (i < steps.length) {
       $num.text(steps[i].text).removeClass(allColors).addClass(steps[i].color);
-      countdownSound.cloneNode().play();
+      playSound('countdown');
     } else {
       clearInterval(interval);
       startGame(category);
@@ -231,6 +247,7 @@ $(function () {
 
   $('.category-list').on('click', '[data-category]', async function () {
     const category = $(this).data('category');
+    unlockSounds();
     await requestMotionPermission();
     startCountdown(category);
   });
