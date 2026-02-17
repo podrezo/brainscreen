@@ -35,7 +35,7 @@ function fitText($el, maxWidth, maxHeight) {
 }
 
 // Tilt detection via acceleration spikes
-const ACCEL_THRESHOLD = 6;     // m/s² — spike magnitude to register a tilt
+const ACCEL_THRESHOLD = 4;     // m/s² — spike magnitude to register a tilt
 const TILT_COOLDOWN = 1000;    // ms before next tilt registers
 
 let tiltCooldown = false;
@@ -53,9 +53,9 @@ function handleMotion(event) {
   // Tilting forward (nod down, correct) produces a positive z spike.
   // Tilting backward (look up, skip) produces a negative z spike.
   if (z > ACCEL_THRESHOLD) {
-    triggerAction(true);   // correct
-  } else if (z < -ACCEL_THRESHOLD) {
     triggerAction(false);  // skip
+  } else if (z < -ACCEL_THRESHOLD) {
+    triggerAction(true);   // correct
   }
 }
 
