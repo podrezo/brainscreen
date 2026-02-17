@@ -20,12 +20,16 @@ function startCountdown(category) {
   const $num = $('#countdown-number');
   const allColors = steps.map(s => s.color).join(' ');
 
+  const countdownSound = new Audio('sounds/countdown-starting.mp3');
+
   $num.text(steps[i].text).removeClass(allColors).addClass(steps[i].color);
+  countdownSound.cloneNode().play();
 
   const interval = setInterval(() => {
     i++;
     if (i < steps.length) {
       $num.text(steps[i].text).removeClass(allColors).addClass(steps[i].color);
+      countdownSound.cloneNode().play();
     } else {
       clearInterval(interval);
       alert('Game Start!');
