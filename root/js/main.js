@@ -1,5 +1,6 @@
 // BrainScreen - main entry point
 
+const APP_VERSION = 'v0.1a';
 const GAME_DURATION = 16;
 
 const screens = {
@@ -44,7 +45,7 @@ function handleOrientation(event) {
   const alpha = event.alpha?.toFixed(1) ?? '-';
   const beta = event.beta?.toFixed(1) ?? '-';
   const gamma = event.gamma?.toFixed(1) ?? '-';
-  $('#debug-orientation').text(`α:${alpha} β:${beta} γ:${gamma}`);
+  $('#debug-info').text(`α:${alpha} β:${beta} γ:${gamma}`);
 
   if (!gameState || tiltCooldown) return;
 
@@ -90,7 +91,7 @@ async function requestMotionPermission() {
       await DeviceOrientationEvent.requestPermission();
     }
   } catch (e) {
-    $('#debug-orientation').text(`Sensor error: ${e.message || e}`);
+    $('#debug-info').text(`Sensor error: ${e.message || e}`);
   }
 }
 
@@ -140,6 +141,7 @@ function showResults() {
   }
 
   screens.show('results');
+  $('#debug-info').text(APP_VERSION);
 }
 
 function endGame() {
@@ -226,6 +228,8 @@ function startCountdown(category) {
 }
 
 $(function () {
+  $('#debug-info').text(APP_VERSION);
+
   $('.category-list').on('click', '[data-category]', async function () {
     const category = $(this).data('category');
     await requestMotionPermission();
