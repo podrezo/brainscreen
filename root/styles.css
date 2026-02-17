@@ -42,6 +42,11 @@ html, body {
   white-space: nowrap;
 }
 
+#results-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (orientation: portrait) {
   #rotate-notice {
     display: flex;

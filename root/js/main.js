@@ -1,6 +1,6 @@
 // BrainScreen - main entry point
 
-const GAME_DURATION = 60;
+const GAME_DURATION = 16;
 
 const screens = {
   show(id) {
@@ -18,13 +18,13 @@ function shuffle(array) {
   return a;
 }
 
-function fitText($el, maxWidth) {
+function fitText($el, maxWidth, maxHeight) {
   let lo = 1;
   let hi = 500;
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2);
     $el.css('font-size', mid + 'px');
-    if ($el[0].scrollWidth > maxWidth) {
+    if ($el[0].scrollWidth > maxWidth || $el[0].scrollHeight > maxHeight) {
       hi = mid - 1;
     } else {
       lo = mid;
@@ -40,7 +40,7 @@ function showWord() {
   const $word = $('#game-word');
   const word = gameState.words[gameState.wordIndex];
   $word.text(word);
-  fitText($word, gameState.containerWidth);
+  fitText($word, gameState.containerWidth, gameState.containerHeight);
 }
 
 function nextWord(correct) {
@@ -57,12 +57,39 @@ function nextWord(correct) {
   }
 }
 
+function showResults() {
+  const correct = gameState.correctAnswers;
+  const skipped = gameState.skippedAnswers;
+
+  $('#results-summary').text(
+    `${correct.length} Correct, ${skipped.length} Skipped`
+  );
+
+  const $list = $('#results-list').empty();
+  const allItems = [
+    ...correct.map(w => ({ word: w, correct: true })),
+    ...skipped.map(w => ({ word: w, correct: false })),
+  ];
+
+  for (const item of allItems) {
+    const colorClass = item.correct ? 'has-text-success' : '';
+    $list.append(
+      `<p class="is-size-5 has-text-centered ${colorClass}">${$('<span>').text(item.word).html()}</p>`
+    );
+  }
+
+  screens.show('results');
+}
+
 function endGame() {
   clearInterval(gameState.timerInterval);
+  // Count the current word on screen as skipped
+  const current = gameState.words[gameState.wordIndex];
+  if (current) {
+    gameState.skippedAnswers.push(current);
+  }
   new Audio('sounds/gameover.wav').play();
-  alert(`Time's up! You got ${gameState.correctAnswers.length} correct!`);
-  screens.show('menu');
-  gameState = null;
+  showResults();
 }
 
 async function startGame(category) {
@@ -71,7 +98,9 @@ async function startGame(category) {
 
   screens.show('game');
 
-  const containerWidth = $('#game-word-wrap').width();
+  const $wrap = $('#game-word-wrap');
+  const containerWidth = $wrap.width();
+  const containerHeight = $wrap.height();
 
   gameState = {
     words: shuffle(words),
@@ -80,6 +109,7 @@ async function startGame(category) {
     skippedAnswers: [],
     timeRemaining: GAME_DURATION,
     containerWidth,
+    containerHeight,
     timerInterval: null,
     tickingPlayed: false,
   };
@@ -136,5 +166,10 @@ $(function () {
   $('.category-list').on('click', '[data-category]', function () {
     const category = $(this).data('category');
     startCountdown(category);
+  });
+
+  $('#results-menu-btn').on('click', function () {
+    gameState = null;
+    screens.show('menu');
   });
 });
