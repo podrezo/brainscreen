@@ -1,6 +1,6 @@
 // BrainScreen - main entry point
 
-const APP_VERSION = 'v0.1a';
+const APP_VERSION = 'v0.1.1a';
 const GAME_DURATION = 16;
 
 const screens = {
