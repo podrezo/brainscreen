@@ -17,12 +17,19 @@
   <div id="app">
     <div id="screen-menu" class="screen">
       <h1 class="title is-3 has-text-centered py-3">BrainScreen</h1>
-      <div class="category-list px-4 pb-4">
+      <div class="category-list is-flex-grow-1 px-4 pb-4">
         <button class="button is-large is-fullwidth is-secondary mb-3" data-category="animals">🐾 Animals</button>
         <!-- <button class="button is-large is-fullwidth is-secondary mb-3" data-category="countries">🌍 Countries</button> -->
         <!-- <button class="button is-large is-fullwidth is-secondary mb-3" data-category="famous-foods">🍕 Famous Foods</button> -->
         <!-- <button class="button is-large is-fullwidth is-secondary mb-3" data-category="video-games">🎮 Video Games</button> -->
         <!-- <button class="button is-large is-fullwidth is-secondary mb-3" data-category="musicians-bands">🎸 Musicians &amp; Bands</button> -->
+      </div>
+    </div>
+
+    <div id="screen-countdown" class="screen is-hidden">
+      <p class="is-size-3 has-text-centered pt-4" id="countdown-notice">Place phone on head!</p>
+      <div class="is-flex-grow-1 is-flex is-justify-content-center is-align-items-center">
+        <span id="countdown-number"></span>
       </div>
     </div>
   </div>

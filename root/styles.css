@@ -23,10 +23,18 @@ html, body {
   overflow: hidden;
 }
 
+.screen.is-hidden {
+  display: none !important;
+}
+
 .category-list {
-  flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+#countdown-number {
+  font-size: 8rem;
+  font-weight: bold;
 }
 
 @media (orientation: portrait) {
